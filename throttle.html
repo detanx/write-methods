@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>throttle</title>
+    <style>
+        body {
+            height: 2000px;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        /**
+         * @Description: 时间戳版节流函数
+         * @param { Function } fun 回调函数
+         * @param { Number } wait 延迟时间
+         * @return { Function }
+         */
+        const throttle = (fun, wait = 1000) => {
+            let timer;
+            return function () {
+                !timer && (timer = setTimeout(() => {
+                    timer = null
+                    fun(...arguments);
+                }, wait))
+            }
+        }
+        /**
+         * @Description: 时间戳版节流函数
+         * @param { Function } fun 回调函数
+         * @param { Number } wait 延迟时间
+         * @return { Function }
+         */
+        const throttle1 = (fun, wait = 1000) => {
+            let oldDate = 0;
+            return function () {
+                const nowDate = Date.now();
+                if (nowDate - oldDate >= wait) {
+                    fun(...arguments);
+                    oldDate = nowDate;
+                }
+            }
+        }
+        function load(...args) {
+            console.log('loading', ...args);
+        }
+        window.onscroll = throttle(load)
+        // window.onscroll = throttle1(load);
+
+
+    </script>
+</body>
+
+</html>

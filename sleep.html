@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sleep</title>
+</head>
+
+<body>
+    <script>
+        // 睡眠函数 方法一
+        const sleep = duration => {
+            return new Promise((resolve, reject) => {
+                setTimeout(resolve, duration);
+            })
+        }
+        function* sleepGenerator(time) {
+            yield new Promise(function(resolve,reject){
+                setTimeout(resolve,time);
+            })
+        }
+
+        /**
+         * @Description: 睡眠函数
+         * @param { Number } duration 睡眠毫秒数
+         */
+        const sleep1 = duration => {
+            let oldDate = Date.now();
+            duration = isNaN(Number(duration)) ? 0 : Number(duration);
+            while (true) {
+                if (Date.now() - oldDate >= duration) {
+                    return false
+                }
+            }
+        }
+        // 睡眠
+        // console.log('睡眠 5 秒！');
+        // console.time('睡眠结束')
+        // sleep1(5000);
+        // console.timeEnd('睡眠结束');
+        const test1 = async () => {
+            await sleep1(3000)
+            console.log('睡眠 2 秒！');
+        }
+        
+        
+        const test = async () => {
+            await sleep(2000);
+            console.timeEnd('Promise sleep');
+        }
+        console.log('睡眠 2 秒！');
+        console.time('Generator sleep');
+        // test()
+        sleepGenerator(2000).next().value.then(()=>{
+            console.timeEnd('Generator sleep');
+        })
+        sleep1(5000);
+        console.log('我在 sleep 之后！');
+
+    </script>
+</body>
+
+</html>

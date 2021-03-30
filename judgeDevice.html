@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>judgeDevice</title>
+</head>
+
+<body>
+    <script>
+        /**
+         * @Description: 判断浏览器、浏览器内核、PC/Mobile、手机类型、操作系统
+         * @Description: 请注意接收的类型的大小写
+         * @param { String } target // 是否为某个浏览器、浏览器内核、pc/mobile、手机类型、操作系统
+         * @return { Boolean / Array }
+         */
+        const judgeDevice = (target) => {
+            const us = navigator.userAgent;
+            const pf = String(navigator.platform); // string兼容Linux
+            const iosRegExp = /\(i[^;]+;( U;)? CPU.+Mac OS X/;
+            const currentDevice = [];
+            const deviceList = ['iPhone', 'Pixel', 'Moto', 'iPad', 'iPod'];
+            const browserList = ['Opera', 'Firefox', 'Chrome', 'Safari',
+                'WeChat MicroMessenger', //微信浏览器
+                'QQ \sQQ' // qq
+            ];
+            const kernelList = [
+                'Trident Trident', //IE内核
+                'Presto Presto',  //opera内核
+                'WebKit AppleWebKit', //苹果、谷歌内核
+                'Gecko Gecko-KHTML', //火狐内核
+            ];
+            
+            const pcSystemList = [
+                {Win: ['Win32', 'Windows']},
+                {Mac: ['Mac68K', 'MacPPC', 'Macintosh', 'MacIntel']},
+                {Win2000: ['Windows NT 5.0', 'Windows 2000']},
+                {WinXP: ['Windows NT 5.1', 'Windows XP']},
+                {Win2003: ['Windows NT 5.2', 'Windows 2003']},
+                {WinVista: ['Windows NT 6.0', 'Windows Vista']},
+                {Win7: ['Windows NT 6.1', 'Windows 7']},
+            ];
+            // 判断 移动 PC
+            if(/Mobile|Android|webOS|iPhone|iPad|iPod|Phone|BlackBerry|IEMobile|OperaMini/i.test(us)) {
+                currentDevice.push('Mobile')
+            } else {
+                currentDevice.push('PC');
+            }
+            // 判断 'iPhone' / 'Pixel' / 'Moto' / 'iPad' / 'iPod'
+            deviceList.forEach(item => {
+                if(us.includes(item)) {
+                    currentDevice.push(item);
+                }
+            })
+            // 判断内核
+            kernelList.forEach(item => {
+                const itemArray = item.split(' ');
+                const kernelTextArray = itemArray[1].split('-');
+                const regExp = new RegExp(kernelTextArray[0], 'i');
+                if(kernelTextArray[1]) {
+                    if ( regExp.test(us) && !us.includes(kernelTextArray[1])) {
+                        currentDevice.push(itemArray[0]);
+                    }
+                } else if(regExp.test(us)) {
+                    currentDevice.push(itemArray[0]);
+                }
+            });
+            // 判断操作系统
+            if(currentDevice.includes('PC')) { // pc系统
+                pcSystemList.forEach(item => {
+                    Object.entries(item).forEach(([key, value]) => {
+                        value.forEach(valueItem => {
+                            if(pf.includes(valueItem)) {
+                                currentDevice.push(key);
+                            }
+                        })
+                    })
+                });
+            } else { // 手机系统
+                us.includes('Android') && currentDevice.push('Android');
+            }
+
+             // iOS（ 小米的miui浏览器可以切换浏览器标识, 小米浏览器中会存在“XiaoMi”的字段 ）
+             // Mac/iOS 区别 https://zhidao.baidu.com/question/710899123986827965.html
+            iosRegExp.test(us) && !us.includes('XiaoMi') && currentDevice.push('iOS');
+            pf.includes("Linux") && currentDevice.push('Linux'); // Linux
+
+            if(!currentDevice.includes(['Mac']) && !currentDevice.includes('Win') && pf === "X11") { // unix
+                currentDevice.push('Unix');
+            }
+
+            // 判断浏览器
+            browserList.forEach(item => {
+                const itemArray = item.split(' ');
+                const regExp = new RegExp(itemArray[1] ? itemArray[1] : itemArray[0], 'i');
+                if(regExp.test(us)) {
+                    if(itemArray[0] === 'Safari') {
+                        !currentDevice.includes('Chrome') && currentDevice.push(itemArray[0]);
+                    } else {
+                        currentDevice.push(itemArray[0]);
+                    }
+                }
+            });
+            return String(target) ? currentDevice.includes(target) : currentDevice;
+        }
+        console.log('currentDevice', judgeDevice());
+        console.log('currentDevice', judgeDevice('Mac'));
+    </script>
+</body>
+
+</html>

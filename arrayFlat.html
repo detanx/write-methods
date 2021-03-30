@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>array flat</title>
+</head>
+
+<body>
+    <script>
+        // 任意维度降一维 内部数据类型不变
+        function flatAll (arr) {
+            while (arr.some(Array.isArray)) {
+                arr = [].concat(...arr);
+            }
+            return arr;
+        }
+        // 多维降一维 内部数据类型变字符串
+        function flatAll1 (arr) {
+            return String(arr).replace(/[\[\]]/g, '').split(',');
+        }
+        const testArr = [{}, 2, [3, [4, [5]]]];
+        console.log('flatAll', flatAll(testArr));
+        console.log('flatAll1', flatAll1(testArr));
+
+        // 指定维度 es6数组方法
+        Array.prototype.newFlat = function(deep = 1) {
+            return deep >= 1 ? this.reduce((res, val) => {
+                return res.concat(Array.isArray(val) ? val.newFlat(-- deep) : val)
+            },[]) : this;
+        }
+        const b = [1, 2, 3, [4, [5, [6]]]].newFlat('2.2');
+        console.log(b);
+
+        // 指定维度 js递归
+        function flat(array, deep = 1){
+            let res = [];
+            array.forEach((item, index) => {
+                Array.isArray(item) && deep >= 1 ? res = res.concat(flat(item, -- deep)) : res.push(array[index]);
+            })
+            return res;
+        };
+        const array = flat([1, 2, 3, [4, [5, [6]]]], '2.1');
+        console.log(array);
+    </script>
+</body>
+
+</html>

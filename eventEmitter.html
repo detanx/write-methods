@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eventEmitter</title>
+</head>
+
+<body>
+    <script>
+        class EventEmitter {
+            constructor() {
+                this.events= {};          
+            }
+            /**
+             * @Description: 订阅事件
+             * @param { Any } eventName
+             * @param { Function } callback // 触发事件的回调
+             */
+            add(eventName, callback) {
+                let cb = callback;
+                if(typeof callback !== 'function' || callback === Function) { // 非函数转化为函数 非函数作为返回值
+                    cb = () => callback;
+                }
+                (this.events[eventName] || (this.events[eventName] = [])).push(cb);
+            }
+            /**
+             * @Description: 注册只执行一次的事件
+             * @param { Any } eventName
+             * @param { Function } callback
+             */
+            once(eventName, callback) {
+                const one = (...args) => {
+                    callback(...args); //在one函数运行原来的函数，只有将one清空
+                    this.removeByCallback(eventName, one);  // 执行后删除
+                }
+                this.add(eventName, one); // emit触发会执行此函数，会给这个函数传递rest参数
+            }
+            /**
+             * @Description: 移除事件，默认回调函数；也可以选择下标
+             * @param { Any } eventName
+             * @param { Function / Number } filterValue
+             * @param { String } type // 'callback'/ 'index'
+             */
+            remove(eventName, filterValue, type) {
+                const obj = {...this.events};
+                delete obj[eventName];
+                let list = [];
+                if(type === 'callback') {
+                    list = (this.events[eventName] || []).filter((item) => item !== filterValue);
+                } else if(type === 'index') {
+                    if(filterValue !== null && !isNaN(Number(filterValue))) {
+                        const list = (this.events[eventName] || []).filter((undefined, i) => Number(filterValue) !== i);
+                    }
+                }
+                list.length && (obj[eventName] = list);
+                this.events = obj;
+            }
+            /**
+             * @Description: 移除事件指定下标的回调
+             * @param { Any } eventName
+             * @param { Number } index // 指定下标
+             */
+            removeByIndex(eventName, index = null) {
+                const obj = {...this.events};
+                delete obj[eventName];
+
+                if(index !== null && !isNaN(Number(index))) {
+                    const list = (this.events[eventName] || []).filter((undefined, i) => index !== i);
+                    list.length && (obj[eventName] = list);
+                }
+                this.events = obj;
+            }
+            /**
+             * @Description: 移除事件指定回调
+             * @param { Any } eventName
+             * @param { Function } callback
+             */
+            removeByCallback(eventName, callback) {
+                const obj = {...this.events};
+                delete obj[eventName];
+                
+                const list = (this.events[eventName] || []).filter((item) => item !== callback);
+                list.length && (obj[eventName] = list);
+                this.events = obj;
+            }
+            /**
+             * @Description: 发布事件
+             * @param { Any } eventName
+             * @param { 多个逗号分割的参数 } param // 回调接收的参数
+             */
+            dispatch(eventName, ...param) {
+                if(this.events[eventName]) {
+                    this.events[eventName].forEach(callback => {
+                        callback(...param);
+                    })
+                }
+            }
+            clear() {
+                this.events = {}
+            }
+            getAll() {
+                return this.events;
+            }
+            /**
+             * @Description: 遍历所有注册的事件
+             * @param { Function } callback
+             */
+            forEach(callback) {
+                Object.entries(this.events).forEach(([key, value]) => {
+                    callback(key, value);
+                })
+            }
+            
+        }
+        const events = new EventEmitter();
+        events.once(undefined, (...args) => {
+            console.log('detanx', ...args);
+        });
+        events.add('getName', (...args) => {
+            console.log('detanx2', ...args);
+        });
+        events.dispatch('getName', ['17', 25]);
+        events.dispatch(undefined, '11', 26);
+        
+        // events.removeByIndex('getName', 0);
+        console.log(events.getAll());
+        // events.remove('getName');
+        // events.dispatch('getName', true, '17', 25);
+        // console.log(events.getAll());
+    </script>
+</body>
+
+</html>

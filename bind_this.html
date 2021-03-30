@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bind_this</title>
+</head>
+
+<body>
+    <script>
+        Function.prototype.myCall = function (context = window) {
+            const args = [...arguments].slice(1);
+            context.fn = this;
+            const result = context.fn(...args);
+            delete context.fn; // 释放内存
+            return result;
+        }
+
+        Function.prototype.myApply = function (context = window) {
+            context.fn = this;
+            let result;
+            if(arguments[1]) {
+                if (!Array.isArray(arguments[1])) {
+                    result = context.fn(arguments[1]);
+                } else {
+                    result = context.fn(...arguments[1]);
+                }
+            } else {
+                result = context.fn();
+            }
+            delete context.fn;  // 释放内存
+            return result;
+        }
+
+        Function.prototype.myBind = function (context = window) {
+            const args = [...arguments].slice(1);
+            let fn = this;
+            let resFn = function () {
+                return fn.myApply(this instanceof resFn ? this : context, args.concat(...arguments));
+            }
+            function tmp() { }
+            tmp.prototype = this.prototype;
+            resFn.prototype = new tmp();
+            return resFn;
+        }
+
+
+        const add = function (a, b, c) {
+            return a + b + c
+        }
+        const callAdd = add.myCall(window, 1, 2, 3);
+        console.log('myCall', callAdd);
+        const applyAdd = add.myApply(window, [1, 2, 3]);
+        console.log('myApply', applyAdd);
+        const bindAdd = add.myBind(window, 1, 2, 3);
+        console.log('myBind', bindAdd());
+    </script>
+</body>
+
+</html>
