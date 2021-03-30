@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>promise</title>
+</head>
+
+<body>
+    <script>
+        const PENDING = 'pending';
+        const FULFILLED = 'fulfilled';
+        const REJECTED = 'rejected';
+
+        const NewPromise = function (executor) {
+            const _this = this;
+            _this.status = PENDING;
+            _this.data = undefined;
+            _this.onResolvedCallback = [];
+            _this.onRejectedCallback = [];
+
+            // 成功
+            function resolve(value) {
+                if (value instanceof NewPromise) {
+                    return value.then(resolve, reject)
+                }
+                setTimeout(function () { // 异步执行所有的回调函数
+                    if (_this.status === PENDING) {
+                        _this.status = FULFILLED;
+                        _this.data = value;
+                        _this.onResolvedCallback.forEach(callback => callback(value));
+                    }
+                })
+            }
+            // 失败
+            function reject(reason) {
+                setTimeout(function () { // 异步执行所有的回调函数
+                    if (_this.status === PENDING) {
+                        _this.status = REJECTED;
+                        _this.data = reason;
+                        _this.onRejectedCallback.forEach(callback => callback(reason));
+                    }
+                })
+            }
+
+            try {
+                executor(resolve, reject);
+            } catch (error) {
+                reject(error);
+            }
+        }
+        // then
+        NewPromise.prototype.then = function (onResolved, onRejected) {
+            const _this = this;
+            if (typeof onResolved !== 'function') {
+                onResolved = function (value) { return value }
+            }
+            if (typeof onRejected !== 'function') {
+                onRejected = function (reason) { throw reason }
+            }
+
+            // 公共判断
+            const common = function (data, resolve, reject) {
+                // 考虑到有可能throw，我们将其包在try/catch块里
+                try {
+                    let value = _this.status === FULFILLED
+                        ? onResolved(data)
+                        : onRejected(data)
+                    if (value instanceof NewPromise) {
+                        value.then(resolve, reject)
+                    }
+                    resolve(value)
+                } catch (error) {
+                    reject(error)
+                }
+            }
+            // 公共判断
+            const pendingCommon = function (data, flag, resolve, reject) {
+                // 考虑到有可能throw，我们将其包在try/catch块里
+                try {
+                    let value = flag === FULFILLED
+                        ? onResolved(data)
+                        : onRejected(data)
+                    if (value instanceof NewPromise) {
+                        value.then(resolve, reject)
+                    }
+                    resolve(value)
+                } catch (error) {
+                    reject(error)
+                }
+            }
+
+            if (_this.status === PENDING) {
+                return new NewPromise(function (resolve, reject) {
+                    _this.onResolvedCallback.push((value) => {
+                        pendingCommon(value, FULFILLED, resolve, reject);
+                    })
+
+                    _this.onRejectedCallback.push((reason) => {
+                        pendingCommon(reason, REJECTED, resolve, reject);
+                    })
+                })
+            } else { // resolve / reject
+                return new NewPromise(function (resolve, reject) {
+                    setTimeout(function () {
+                        common(_this.data, resolve, reject)
+                    })
+                })
+            }
+        }
+        NewPromise.resolve = function (value) {
+            if (value instanceof NewPromise) return value;
+            if (value === null) return null;
+            // 判断如果是promise
+            if (typeof value === 'object' || typeof value === 'function') {
+                try {
+                    // 判断是否有then方法
+                    let then = value.then;
+                    if (typeof then === 'function') {
+                        return new NewPromise(then.call(value)); // 执行value方法
+                    }
+                } catch (e) {
+                    return new NewPromise((resolve, reject) => {
+                        reject(e);
+                    });
+                }
+            }
+            return new NewPromise((resolve, reject) => {
+                resolve(value);
+            });
+        }
+        NewPromise.reject = function (value) {
+            if (value instanceof NewPromise) return value;
+            if (value === null) return null;
+            // 判断如果是promise
+            if (typeof value === 'object' || typeof value === 'function') {
+                try {
+                    // 判断是否有then方法
+                    let then = value.then;
+                    if (typeof then === 'function') {
+                        return new NewPromise(then.call(value)); // 执行value方法
+                    }
+                } catch (e) {
+                    return new NewPromise((resolve, reject) => {
+                        reject(e);
+                    });
+                }
+            }
+            return new NewPromise((resolve, reject) => {
+                reject(value);
+            });
+        }
+        // catch方法
+        NewPromise.prototype.catch = function (onRejected) {
+            return this.then(null, onRejected)
+        }
+        // finally
+        NewPromise.prototype.finally = function (fun) {
+            return this.then((value) => {
+                return NewPromise.resolve(fun()).then(() => value);
+            }, (err) => {
+                return NewPromise.resolve(fun()).then(() => {
+                    throw err;
+                });
+            });
+        };
+        // defered
+        NewPromise.deferred = function () {
+            const dfd = {}
+            dfd.promise = new NewPromise(function (resolve, reject) {
+                dfd.resolve = resolve
+                dfd.reject = reject
+            })
+            return dfd
+        }
+        // all
+        NewPromise.all = function (promises) {
+            return new NewPromise((resolve, reject) => {
+                const result = []
+                promises = Array.isArray(promises) ? promises : []
+                const len = promises.length;
+                if (len === 0) resolve([]);
+                let count = 0
+                for (let i = 0; i < len; ++i) {
+                    if (promises[i] instanceof NewPromise) {
+                        promises[i].then(value => {
+                            count++
+                            result[i] = value
+                            if (count === len) resolve(result)
+                        }, reject)
+                    } else {
+                        result[i] = promises[i]
+                    }
+                }
+            })
+        }
+        // race
+        NewPromise.race = function (promises) {
+            return new NewPromise((resolve, reject) => {
+                promises = Array.isArray(promises) ? promises : []
+                promises.forEach(promise => {
+                    promise.then(resolve, reject)
+                })
+            })
+        }
+        // allSettled
+        NewPromise.allSettled = function (promises) {
+            return new NewPromise((resolve, reject) => {
+                promises = Array.isArray(promises) ? promises : []
+                let len = promises.length;
+                const argslen = len;
+                if (len === 0) return resolve([]);
+                let args = Array.prototype.slice.call(promises);
+                function resolvePromise(index, value) {
+                    if (typeof value === 'object') {
+                        const then = value.then;
+                        if (typeof then === 'function') {
+                            then.call(value, function (val) {
+                                args[index] = { status: 'fulfilled', value: val };
+                                if (--len === 0) {
+                                    resolve(args);
+                                }
+                            }, function (e) {
+                                args[index] = { status: 'rejected', reason: e };
+                                if (--len === 0) {
+                                    reject(args);
+                                }
+                            })
+                        }
+                    }
+                }
+
+                for (let i = 0; i < argslen; i++) {
+                    resolvePromise(i, args[i]);
+                }
+            })
+        }
+
+        // 测试
+        // const promise = new NewPromise(function (resolve, reject) {
+        //     console.log('ss', 11)
+        //     // resolve(123)
+        //     reject('errr')
+        //     // throw 'ree'
+        // })
+        // promise.catch(val => {
+        //     console.log('val', val)
+        // })
+        // const promise1 = new NewPromise(function (resolve, reject) {
+        //     console.log('ss', 11)
+        //     resolve(123)
+        //     // reject('errr')
+        // })
+        // const rejected = NewPromise.reject(-1);
+        // rejected.catch(val => {
+        //     console.log('rejected', val)
+        // })
+        const resolved = NewPromise.resolve(1);
+        const rejected = NewPromise.reject(new NewPromise((resolve, reject) => {
+            console.log('reject');
+            resolve('reject')
+        }));
+        const resolved1 = NewPromise.resolve(17);
+        const p = NewPromise.all([resolved, resolved1, rejected]);
+        p.then((result) => {
+            console.log('result', result)
+        }).catch(err => {
+            console.log('err', err)
+        })
+    </script>
+</body>
+
+</html>

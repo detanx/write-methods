@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>curry</title>
+</head>
+
+<body>
+    <script>
+
+        const add = function (a, b, c) {
+            return a + b + c
+        }
+        /**
+         * @Description: 柯里化
+         * @param { Function } fn // 需要柯里化的函数
+         * @param { Array } args // 初始的参数
+         * @return { Function }
+         */
+        // function curry(fn, args = []) {
+        //     const len = fn.length;
+        //     return function () {
+        //         args = args.concat([...arguments]);
+        //         if (args.length < len) {
+        //             return curry(fn, args);
+        //         } else {
+        //             return fn(...args);
+        //         }
+        //     }
+        // }
+
+        const curry = (fn, arr = []) => (...args) => (
+            arg => arg.length === fn.length
+                ? fn(...arg)
+                : curry(fn, arg)
+        )([...arr, ...args])
+        
+        const curryAdd = curry(add);
+        console.log(curryAdd(1)(2, 8));
+    </script>
+</body>
+
+</html>
