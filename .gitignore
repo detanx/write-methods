@@ -1,2 +1,4 @@
 /promiseA+/node_modules
 /promiseA+/package-lock.json
+
+.DS_Store
