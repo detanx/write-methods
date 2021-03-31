@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>objectArrayFilterOrUnique</title>
+</head>
+<body>
+    <script>
+        /**
+         * @Description: 14.1 过滤对象数组-保留指定键值
+         * @param { Array } data // 需要过滤的数组
+         * @param { Array } keys // 需要保留的键值
+         * @param { Function } fn // 过滤函数
+         * @return { Array }
+         */
+         const filterObjectKeepKeys = (data, keys, fn) => {
+            return data.filter(fn).map(el => {
+                return keys.reduce((acc, key) => {
+                    acc[key] = el[key];
+                    return acc;
+                }, {});
+            });
+        }
+        /**
+         * @Description: 14.2 对象数组去重
+         * @param { Array } data // 需要去重的数组
+         * @param { Function } fn // 去重函数
+         * @return { Array }
+         */
+        const uniqueElements = (arr, fn) => {
+            return arr.reduce((acc, cur) => {
+                if (!acc.some(item => fn(cur, item))) acc.push(cur);
+                return acc;
+            }, []);
+        }
+
+        // 测试
+        const data = [{
+            name: '小小小十七',
+            age: 26
+        }, {
+            name: '17',
+            age: 24
+        }, {
+            name: '17',
+            age: 26
+        }];
+
+        const filterData = filterObjectKeepKeys(data, ['name'], item => item.age <= 24);
+        console.log('filterData', filterData); // [{name: '17'}]
+
+        const filterData1 = uniqueElements(data, (a, b) => a.name == b.name);
+        console.log('filterData1', filterData1); // [{name: '小小小十七', age: 26}, {name: '17',age: 24}]
+    </script>
+</body>
+</html>

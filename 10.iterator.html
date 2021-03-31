@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iterator</title>
+</head>
+
+<body>
+    <script>
+        // Iterator 的作用有三个：
+        //    1. 为各种数据结构，提供一个统一的、简便的访问接口；
+        //    2.使得数据结构的成员能够按某种次序排列；
+        //    3. ES6 创造了一种新的遍历命令for...of循环，Iterator 接口主要供for...of消费。
+        // 判断是否有 Iterator 接口
+        const hasIterator = (data) => {
+            if (data === null) return false;
+            if(typeof data[Symbol.iterator] === 'function') return true;
+            return false;
+        }
+
+        // 为没有 Iterator 的数据手动添加 Iterator 接口
+        function iterator() {
+            let index = -1;
+            let keyValues = Object.entries(this);
+            let len = keyValues.length;
+            return {
+                next() {
+                    ++ index;
+                    return index < len ? {
+                        value: keyValues[index],
+                        done: false
+                    } : {
+                        value: keyValues[index],
+                        done: true
+                    };
+                }
+            };
+        }
+
+        // test
+        const user = {
+            name : '小小小十七',
+            age : 26,
+            sex: 'boy',
+            // [Symbol.iterator]: iterator // 当前对象添加
+        };
+        // 为所有 Object 添加
+        Object.prototype[Symbol.iterator] = iterator;
+        for(const [key, value] of user) {
+            console.log('key:', key, ',value:', value);
+        }
+    </script>
+</body>
+
+</html>

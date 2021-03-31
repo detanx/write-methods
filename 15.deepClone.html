@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>deepClone</title>
+</head>
+<body>
+    <script>
+        const deepClone = (target) => {
+            let result;
+            if (typeof target === 'object' && target !== null) { // 深拷贝的是一个对象并且不为 null
+                if (Array.isArray(target)) { // 数组
+                    result = [];
+                    for (let i in target) {
+                        result.push(deepClone(target[i])); // 递归克隆数组中的每一项
+                    }
+                } else if( [RegExp, Date].includes(target.constructor) ){ // Date、RegExp，直接赋值 
+                    result = target;
+                } else { // 普通对象
+                    result = {};
+                    for (let i in target) { 
+                        result[i] = deepClone(target[i]);
+                    }
+                }
+            } else { // 基本数据类型
+                result = target;
+            }
+            return result;
+        }
+
+        // test
+        const testObj = {
+            base: {
+                undefined: undefined,
+                null: null,
+                number: 17,
+                boolean: true,
+                string: 'string',
+                symbol: Symbol(),
+                bigint: 17n,
+                nan: NaN
+            },
+            func: function () {
+                console.log(this.a)
+            },
+            arr: [{reg: /.js/}, 'a', 3, null, undefined],
+            math: Math.pow(10, 1),
+            date: new Date()
+        }
+        console.log(deepClone(testObj));
+    </script>
+</body>
+</html>

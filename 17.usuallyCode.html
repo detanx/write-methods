@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>usuallyCode</title>
+</head>
+<body>
+    <script>
+        // 1. 生成指定位数随机验证码
+        createVerifyCode = (number = 4) => {
+            number = isNaN(Number(number)) ? 4 : Number(number);
+            return  Math.floor(Math.random() * Math.pow(10, number)).toString().padStart(number, "0");
+        }
+
+        // 2. 快速生成有规律自定义数组
+        console.log( Array.from(new Array(10), (undefined, i)=> i)); // 索引 0 开始填充
+        console.log( Array.from({length: 10}, (undefined, i)=> i * 2)); // 索引的 倍数
+        console.log(Object.keys(Array.from({ length: 10 })).map(item => '17' + item)); // 指定前缀
+        console.log([...new Array(10).keys()]); // 索引 0 开始填充
+        // 3. 生成二维数组，索引 0 开始填充
+        console.log(new Array(2).fill(null).map((undefined, index) => Array.from(new Array(10), (x, i)=> i + index * 10)));
+
+        // 4. 数字千分位
+        console.log('toLocaleString', (1234567890.11111).toLocaleString());
+        function getNumberThousand(num) {
+            return (num || 0).toString().replace(/\d+/, function (n) {
+                var len = n.length;
+                if (len % 3 === 0) {
+                    return n.replace(/(\d{3})/g, ',$1').slice(1);
+                } else {
+                    return n.slice(0, len % 3) + n.slice(len % 3).replace(/(\d{3})/g, ',$1');
+                }
+            });
+        }
+
+        // 5. 驼峰转指定符号格式字符串
+        const fromCamelCase = (str, separator = '_') => {
+            return str
+            .replace(/([a-z\d])([A-Z])/g, '$1' + separator + '$2')
+            .replace(/([A-Z]+)([A-Z][a-z\d]+)/g, '$1' + separator + '$2')
+            .toLowerCase();
+        }
+
+        // 6. 密码组合正则
+        const passwordReg = /(?!^(\d+|[a-zA-Z]+|[~!@#$%^&*?]+)$)^[\w~!@#$%^&*?]{8,20}$/;
+        // 长度8~20位字符，支持大小写字母、数字、符号三种字符中至少任意两种字符组合
+        console.log('1. createVerifyCode', createVerifyCode(10));
+        console.log('4. getNumberThousand',getNumberThousand(1234567890.11111));
+        console.log('5. fromCamelCase', fromCamelCase('fromCamelCase'));
+    </script>
+</body>
+</html>

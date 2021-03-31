@@ -36,7 +36,7 @@
          * @return { Function }
          */
         const throttle1 = (fun, wait = 1000) => {
-            let oldDate = 0;
+            let oldDate = Date.now();
             return function () {
                 const nowDate = Date.now();
                 if (nowDate - oldDate >= wait) {
@@ -48,8 +48,8 @@
         function load(...args) {
             console.log('loading', ...args);
         }
-        window.onscroll = throttle(load)
-        // window.onscroll = throttle1(load);
+        // window.onscroll = throttle(load)
+        window.onscroll = throttle1(load);
 
 
     </script>

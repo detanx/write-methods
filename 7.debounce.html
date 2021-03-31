@@ -16,26 +16,23 @@
     <script>
         /**
          * @Description: 防抖函数
-         * @param { Function } fun 回调函数
+         * @param { Function } func 回调函数
          * @param { Number } wait 延迟时间
          * @param { Boolean } immediate 是否立即执行
          * @return { Function }
          */
-        const debounce = (fun, wait = 1000, immediate = false) => {
-            let timer = null;
+        const debounce = (func, wait = 1000, immediate = false) => {
+            let timeout = null;
             return function () {
-                timer && clearTimeout(timer);
-                if (immediate) {
-                    let callNow = !timer;
-                    timer = setTimeout(() => {
-                        timer = null;
-                    }, wait)
-                    callNow && fun(...arguments);
-                } else {
-                    timer = setTimeout(() => {
-                        fun(...arguments);
-                    }, wait)
-                }
+                const context = this, args = arguments;
+                const later = function() {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                const callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
             }
         }
         function load(...args) {

@@ -180,16 +180,18 @@
                 promises = Array.isArray(promises) ? promises : []
                 const len = promises.length;
                 if (len === 0) resolve([]);
-                let count = 0
-                for (let i = 0; i < len; ++i) {
-                    if (promises[i] instanceof NewPromise) {
-                        promises[i].then(value => {
-                            count++
-                            result[i] = value
-                            if (count === len) resolve(result)
-                        }, reject)
+                let count = 0;
+                for (let i = 0; i < len; i ++) {
+                    if (promiseList[i] instanceof MyPromise) {
+                        promiseList[i].then(value => {
+                            count ++;
+                            result[i] = value;
+                            if (count === len) resolve(result);
+                        }, reject);
                     } else {
-                        result[i] = promises[i]
+                        count ++;
+                        result[i] = promiseList[i];
+                        if (count === len) resolve(result);
                     }
                 }
             })

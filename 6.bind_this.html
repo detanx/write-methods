@@ -35,8 +35,8 @@
 
         Function.prototype.myBind = function (context = window) {
             const args = [...arguments].slice(1);
-            let fn = this;
-            let resFn = function () {
+            const fn = this;
+            const resFn = function () {
                 return fn.myApply(this instanceof resFn ? this : context, args.concat(...arguments));
             }
             function tmp() { }

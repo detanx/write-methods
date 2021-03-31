@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dataType</title>
+</head>
+<body>
+    <script>
+        // typeof 返回基本数据类型和引用类型
+        // null undefined number string boolean symbol bigint function
+        console.log('--------typeof----------');
+        console.log(typeof null); // object
+        console.log(typeof undefined); // undefined
+        console.log(typeof 17); // number
+        console.log(typeof '小小小十七'); // string
+        console.log(typeof true); // boolean
+        console.log(typeof Symbol()); // symbol
+        console.log(typeof 17n); // bigint
+        console.log(typeof Function); // function
+
+        // `instanceof` 用于判断一个变量是否某个对象的实例，返回 true / false 。
+        console.log('--------instanceof----------');
+        console.log(String instanceof Object); // true
+        console.log(null instanceof Object); // false
+        console.log([] instanceof Object); // true
+
+        // Object 对象上的 toString 方法
+
+        const getDataType = (data) => {
+            // Object.prototype.toString.call(data) [object Number] 
+            return Object.prototype.toString.call(data).slice(8, -1); // 去掉前面固定的 “[object ”和后面的 “]”
+        }
+        console.log('--------getDataType----------');
+        console.log(getDataType(new Date())); // Date
+        console.log(getDataType(new RegExp())); // RegExp
+        console.log(getDataType(Math)); // Math
+        console.log(getDataType(JSON)); // JSON
+        console.log(getDataType(17n)); // BigInt
+        console.log(getDataType('小小小十七')); // String
+        
+        console.log('--------NaN----------');
+        console.log(typeof NaN); // Number
+        console.log(getDataType(NaN)); // Number
+        console.log(isNaN(NaN)); // true
+
+    </script>
+</body>
+</html>
