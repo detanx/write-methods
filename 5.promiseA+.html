@@ -72,9 +72,8 @@
                         // 创建一个微任务等待 promise2 完成初始化
                         queueMicrotask(() => {
                             try {
-                                let x;
                                 // 调用成功/失败回调，并且把值/原因返回
-                                type === FULFILLED ? x = onFulfilled(this.value) : x = onRejected(this.reason);
+                                const x = type === FULFILLED ? onFulfilled(this.value) : onRejected(this.reason);
                                 // 传入 resolvePromise 集中处理
                                 resolvePromise(promise1, x, resolve, reject);
                             } catch (error) {
@@ -104,29 +103,29 @@
             finally(func) {
                 return this.then(
                     value =>  MyPromise.resolve(func()).then(() => value),
-                    err => MyPromise.resolve(func()).then(() => { throw err})
+                    err => MyPromise.resolve(func()).then(() => { throw err })
                 );
             }
 
             // all
             static all(promiseList) {
                 return new MyPromise((resolve, reject) => {
-                const result = [];
+                    const result = [];
                     // 非null的对象 并且有 iterator 借口
                     if(promiseList !== null && typeof promiseList[Symbol.iterator] === 'function') {
                         const len = promiseList.length;
-                        if (len === 0) resolve([]);
+                        if (len === 0) resolve(result);
                         let count = 0;
                         for (let i = 0; i < len; i ++) {
                             if (promiseList[i] instanceof MyPromise) { // promise
                                 promiseList[i].then(value => {
-                                    count ++;
                                     result[i] = value;
+                                    ++ count;
                                     if (count === len) resolve(result);
                                 }, reject);
                             } else {
-                                count ++;
                                 result[i] = promiseList[i];
+                                ++ count;
                                 if (count === len) resolve(result);
                             }
                         }
@@ -192,11 +191,21 @@
             return dfd;
         }
         // test
-        MyPromise.all([0,2, MyPromise.reject(-1)]).then((result) => {
-            console.log('result', result);
-        }).catch(err => {
-            console.log('err', err);
-        })
+
+
+        const newp = new MyPromise((resolve, reject) => {
+        console.log('sss');
+           reject(1);
+       })
+       newp.then(value => {
+           console.log('va', value);
+       })
+
+        // MyPromise.all([0,2, MyPromise.reject(-1)]).then((result) => {
+        //     console.log('result', result);
+        // }).catch(err => {
+        //     console.log('err', err);
+        // })
 
         // MyPromise.resolve().then(() => {
         //     console.log(0);
@@ -209,6 +218,13 @@
         //     console.log('ssssaaa');
         // })
 
+        const all = MyPromise.all([newp,2,3]);
+        all.then(value => {
+            console.log('all', value);
+        })
+        all.catch(err => {
+            console.log('err', err);
+        })
 
 
     </script>

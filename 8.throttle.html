@@ -24,7 +24,7 @@
             let timer;
             return function () {
                 !timer && (timer = setTimeout(() => {
-                    timer = null
+                    timer = null;
                     fun(...arguments);
                 }, wait))
             }

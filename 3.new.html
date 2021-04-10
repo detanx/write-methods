@@ -35,7 +35,8 @@
             // const instance = Object.create(fn.prototype);
 
             // 创建新对象方法三
-            const instance = {};instance.__proto__ = fn.prototype;
+            const instance = {};
+            instance.__proto__ = fn.prototype;
 
             const res = fn.apply(instance, rest);
             return isComplexDataType(res) ? res : instance

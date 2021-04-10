@@ -102,22 +102,22 @@ class MyPromise {
     // all
     static all(promiseList) {
         return new MyPromise((resolve, reject) => {
-        const result = [];
+            const result = [];
             // 非null的对象 并且有 iterator 借口
             if(promiseList !== null && typeof promiseList[Symbol.iterator] === 'function') {
                 const len = promiseList.length;
-                if (len === 0) resolve([]);
+                if (len === 0) resolve(result);
                 let count = 0;
                 for (let i = 0; i < len; i ++) {
                     if (promiseList[i] instanceof MyPromise) { // promise
                         promiseList[i].then(value => {
-                            count ++;
                             result[i] = value;
+                            ++ count;
                             if (count === len) resolve(result);
                         }, reject);
                     } else {
-                        count ++;
                         result[i] = promiseList[i];
+                        ++ count;
                         if (count === len) resolve(result);
                     }
                 }
