@@ -7,6 +7,63 @@
 </head>
 <body>
     <script>
+
+        // 是否有 iterator 接口
+        const hasIterator = (data) => {
+            return data !== null && typeof data[Symbol.iterator] === 'function';
+        }
+
+        // 无 iterator 接口异常
+        const noIteratorError = (data) => {
+            return new TypeError(typeof data + `${data === null ? ' null' : ''} is not iterable (cannot read property Symbol(Symbol.iterator))`)
+
+        }
+        function resolvePromise(promise, x, resolve, reject) {
+            if (promise === x) { // 如果相等了，说明return的是自己，抛出类型错误并返回
+                return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
+            }
+            if (typeof x === 'object' || typeof x === 'function') {
+                if (x === null) { // x 为 null 直接返回，走后面的逻辑会报错
+                    return resolve(x);
+                }
+                let then;
+                try {
+                    then = x.then;
+                } catch(error) { // 如果取 x.then 的值时抛出错误 error ，则以 error 为据因拒绝 promise
+                    return reject(error);
+                }
+                
+                if (typeof then === 'function') { // 如果 then 是函数
+                    let called = false;
+                    try {
+                        then.call( // this 指向 x
+                        x, y => { // 如果 resolvePromise 以值 y 为参数被调用，则运行 [[Resolve]](promise, y)
+                            // 如果 resolvePromise 和 rejectPromise 均被调用，
+                            // 或者被同一参数调用了多次，则优先采用首次调用并忽略剩下的调用
+                            // 实现这条需要前面加一个变量 called
+                            if (called) return;
+                            called = true;
+                            resolvePromise(promise, y, resolve, reject);
+                        }, r => { // 如果 rejectPromise 以据因 r 为参数被调用，则以据因 r 拒绝 promise
+                            if (called) return;
+                            called = true;
+                            reject(r);
+                        });
+                    } catch (error) { // 如果调用 then 方法抛出了异常 error：
+                        // 如果 resolvePromise 或 rejectPromise 已经被调用，直接返回
+                        if (called) return;
+
+                        // 否则以 error 为据因拒绝 promise
+                        reject(error);
+                    }
+                } else { // 如果 then 不是函数，以 x 为参数执行 promise
+                    resolve(x);
+                }
+            } else { // 如果 x 不为对象或者函数，以 x 为参数执行 promise
+                resolve(x);
+            }
+        }
+
         const PENDING = 'pending';
         const FULFILLED = 'fulfilled';
         const REJECTED = 'rejected';
@@ -107,81 +164,118 @@
                 );
             }
 
-            // all
+            // --------------- all ---------------
             static all(promiseList) {
                 return new MyPromise((resolve, reject) => {
-                    const result = [];
                     // 非null的对象 并且有 iterator 借口
-                    if(promiseList !== null && typeof promiseList[Symbol.iterator] === 'function') {
+                    if(hasIterator(promiseList)) {
                         const len = promiseList.length;
-                        if (len === 0) resolve(result);
-                        let count = 0;
+                        let count = 0
+                        if (len === 0) resolve([]);
+                        const result = [];
+
+                        // 方法一
+                        // promiseList.forEach((promise, index) => {
+                        //     MyPromise.resolve(promise).then(value => {
+                        //         count++;
+                        //         result[index] = value;
+                        //         if(count === len) {
+                        //             resolve(result);
+                        //         }
+                        //     }, reason => {
+                        //         reject(reason);
+                        //     });
+                        // });
+
+                        // 方法二
                         for (let i = 0; i < len; i ++) {
                             if (promiseList[i] instanceof MyPromise) { // promise
                                 promiseList[i].then(value => {
                                     result[i] = value;
                                     ++ count;
-                                    if (count === len) resolve(result);
                                 }, reject);
                             } else {
-                                result[i] = promiseList[i];
                                 ++ count;
-                                if (count === len) resolve(result);
+                                result[i] = promiseList[i];
                             }
                         }
+                        queueMicrotask(() => { // then 是微任务，添加一个新的微任务等then的执行结果
+                            count === len && resolve(result);
+                        })
                     } else {
-                        reject( new TypeError(typeof promiseList + `${promiseList === null ? ' null' : ''} is not iterable (cannot read property Symbol(Symbol.iterator))`))
+                        reject( noIteratorError(promiseList) )
+                    }
+                })
+            }
+
+            // --------------- race ---------------
+            static race (promiseList) {
+                return new MyPromise((resolve, reject) => {
+                    if(hasIterator(promiseList)) {
+                        for(let i = 0; i < promiseList.length; i++){
+                            MyPromise.resolve(promiseList[i]).then(value => {
+                                resolve(value);
+                            }, reason => {
+                                reject(reason);     
+                            });
+                        }  
+                    } else {
+                        reject( noIteratorError(promiseList) )
+                    }
+                })
+            }
+
+            // --------------- any ---------------
+            static any (promiseList) {
+                return new MyPromise((resolve, reject) => {
+                    const result = [];
+                    let count = 0;
+                    const length = promiseList.length;
+                    if(hasIterator(promiseList)) {
+                        for(let i = 0; i < length; i++){
+                            MyPromise.resolve(promiseList[i]).then(value => {
+                                resolve(value);
+                            }, reason => {
+                                result[i] = reason;
+                                ++ count;
+                                if(count === length) reject(result)
+                            });
+                        }  
+                    } else {
+                        reject( noIteratorError(promiseList) )
+                    }
+                })
+            }
+
+            // --------------- allSettled ---------------
+            static allSettled(promiseList) {
+                return new MyPromise((resolve, reject) => {
+                    if(hasIterator(promiseList)) {
+                        const len = promiseList.length;
+                        if( len === 0 ) return [];
+                        const result = [];
+                        for(let i = 0; i < len; i ++) {
+                            if(promiseList[i] instanceof MyPromise) {
+                                promiseList[i].then(value => {
+                                    result[i] = {status: 'fulfilled', value}
+                                }, reason => {
+                                    result[i] = {status: 'rejected', reason}
+                                })
+                            } else {
+                                result[i] = {status: 'fulfilled', value: promiseList[i]};
+                            }
+                        }
+                        queueMicrotask(() => { // then 是微任务，添加一个新的微任务等then的执行结果
+                            resolve(result)
+                        })
+                    } else {
+                        reject( noIteratorError(promiseList) )
                     }
                 })
             }
         }
-        function resolvePromise(promise, x, resolve, reject) {
-            if (promise === x) { // 如果相等了，说明return的是自己，抛出类型错误并返回
-                return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
-            }
-            if (typeof x === 'object' || typeof x === 'function') {
-                if (x === null) { // x 为 null 直接返回，走后面的逻辑会报错
-                    return resolve(x);
-                }
-                let then;
-                try {
-                    then = x.then;
-                } catch(error) { // 如果取 x.then 的值时抛出错误 error ，则以 error 为据因拒绝 promise
-                    return reject(error);
-                }
-                
-                if (typeof then === 'function') { // 如果 then 是函数
-                    let called = false;
-                    try {
-                        then.call( // this 指向 x
-                        x, y => { // 如果 resolvePromise 以值 y 为参数被调用，则运行 [[Resolve]](promise, y)
-                            // 如果 resolvePromise 和 rejectPromise 均被调用，
-                            // 或者被同一参数调用了多次，则优先采用首次调用并忽略剩下的调用
-                            // 实现这条需要前面加一个变量 called
-                            if (called) return;
-                            called = true;
-                            resolvePromise(promise, y, resolve, reject);
-                        }, r => { // 如果 rejectPromise 以据因 r 为参数被调用，则以据因 r 拒绝 promise
-                            if (called) return;
-                            called = true;
-                            reject(r);
-                        });
-                    } catch (error) { // 如果调用 then 方法抛出了异常 error：
-                        // 如果 resolvePromise 或 rejectPromise 已经被调用，直接返回
-                        if (called) return;
 
-                        // 否则以 error 为据因拒绝 promise
-                        reject(error);
-                    }
-                } else { // 如果 then 不是函数，以 x 为参数执行 promise
-                    resolve(x);
-                }
-            } else { // 如果 x 不为对象或者函数，以 x 为参数执行 promise
-                resolve(x);
-            }
-        }
-
-        // defered
+        // --------------- defered ---------------
         MyPromise.deferred = function () {
             const dfd = {};
             dfd.promise = new MyPromise( (resolve, reject) => {
@@ -190,22 +284,21 @@
             })
             return dfd;
         }
-        // test
 
+        // --------------- test ---------------
+        const resolved = MyPromise.resolve(42);
+        const rejected = MyPromise.reject(-1);
+        const alsoRejected = MyPromise.reject(Infinity);
 
-        const newp = new MyPromise((resolve, reject) => {
-        console.log('sss');
-           reject(1);
-       })
-       newp.then(value => {
-           console.log('va', value);
-       })
+        MyPromise.any([resolved, rejected, alsoRejected]).then(function (result) {
+            console.log(result); // 42
+        });
 
-        // MyPromise.all([0,2, MyPromise.reject(-1)]).then((result) => {
-        //     console.log('result', result);
-        // }).catch(err => {
-        //     console.log('err', err);
-        // })
+        MyPromise.race([1,rejected, alsoRejected]).then(function (result) {
+            console.log('race', result);
+        }).catch(function (results) {
+            console.log('catch', results); // [-1, Infinity]
+        });
 
         // MyPromise.resolve().then(() => {
         //     console.log(0);
@@ -218,13 +311,13 @@
         //     console.log('ssssaaa');
         // })
 
-        const all = MyPromise.all([newp,2,3]);
-        all.then(value => {
-            console.log('all', value);
-        })
-        all.catch(err => {
-            console.log('err', err);
-        })
+        // const all = MyPromise.all([newp,2,3]);
+        // all.then(value => {
+        //     console.log('all', value);
+        // })
+        // all.catch(err => {
+        //     console.log('err', err);
+        // })
 
 
     </script>

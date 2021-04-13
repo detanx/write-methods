@@ -182,3 +182,5 @@ MyPromise.deferred = function () {
     })
     return dfd;
 }
+
+// module.exports = MyPromise

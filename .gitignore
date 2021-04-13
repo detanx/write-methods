@@ -1,4 +1,5 @@
 /promiseA+/node_modules
 /promiseA+/package-lock.json
+/promiseA+/yarn.lock
 
 .DS_Store
