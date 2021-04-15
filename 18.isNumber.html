@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>isNumber</title>
+</head>
+<body>
+    <script>
+        /**
+        * @param { * } data
+        * @return { boolean }
+        */
+        const isNumber = function(data) {
+            data = data.toString().trim();
+            const length = data.length
+            if(data === null || length == 0) return false;
+            let isNumber = false, isDecimal = false, isScience = false;
+            for(let i = 0; i < length; i ++) {
+                if(/[0-9]/.test(data[i])) {
+                    isNumber = true;
+                } else if(data[i] === '.') { 
+                    if(isDecimal || isScience) return false;
+                    isDecimal = true;
+                } else if(['e', 'E'].includes(data[i])) {
+                    if(!isNumber || isScience) return false;
+                    isScience = true;
+                    isNumber = false;
+                } else if(['+', '-'].includes(data[i])) { 
+                    if(i !== 0 && !['e', 'E'].includes(data[i-1])) return false;
+                } else {
+                    return false;
+                }
+            }
+            return isNumber;
+        };
+        console.log('-1E-16', isNumber(-1E-16));
+        console.log('5e2',isNumber(5e2));
+        console.log('3.1416', isNumber(3.1416));
+        console.log('..1', isNumber('..1'));
+        console.log('e.1', isNumber(' e.1'));
+    </script>
+</body>
+</html>
