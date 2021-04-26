@@ -24,8 +24,8 @@
              */
             setItem(key, value, expires = null) {
                 const objValue = {value};
-            if(expires && !isNaN(Number(expires))) {
-                    objValue.expires = new Date().valueOf() + Math.abs(Number(expires));
+                if(expires && !isNaN(Number(expires))) {
+                    objValue.expires = Date.now() + Math.abs(Number(expires));
                 }
                 this.storage.setItem(key, JSON.stringify(objValue));
             }
@@ -38,7 +38,7 @@
                 const strValue = this.storage.getItem(key);
                 if(strValue) {
                     const objValue = JSON.parse(strValue);
-                    const date = new Date().valueOf();
+                    const date = Date.now();
                     if(objValue.expires && date > Number(objValue.expires)) {
                         this.removeItem(key);
                         return null;

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>rewriteArrayMapFilterReduce</title>
+    <style>
+        #blue {
+            position:relative;
+            width: 0;
+            height: 0;
+            border-width: 0 40px 40px;
+            border-style: solid;
+            border-color: transparent transparent blue;
+        }
+        #blue::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: -38px;
+            border-width: 0 38px 38px;
+            border-style: solid;
+            border-color: transparent transparent red;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="blue"><div>
+    <script>
+        // array map
+        const newMap = function(fn, context = window) {
+            const arr = this;
+            const length = arr.length;
+            const mappedArr = [];
+            for(let i = 0; i < length; i ++) {
+                if(!arr.hasOwnProperty(i)) continue;
+                mappedArr[i] = fn.call(context, arr[i], i, this);
+            }
+            return mappedArr
+        }
+        Array.prototype.selfMap = newMap;
+
+        const result = [1,2,,,3].selfMap(item => item + 2);
+        console.log('map result', result);
+
+        // array filter
+        const newFilter = function(fn, context = window) {
+            const arr = this;
+            const result = [];
+            const length = arr.length;
+            for(let i = 0; i < length; i ++) {
+                if(!arr.hasOwnProperty(i)) continue;
+                fn.call(context, arr[i], i, this) && result.push(arr[i]) 
+            }
+            return result;
+        }
+        Array.prototype.selfFilter = newFilter;
+
+        const resultFilter = [1,2,,,3].selfFilter(item => item + 2);
+        console.log('filter result', resultFilter);
+
+        // array reduce
+        const newReduce = function(fn, initValue) {
+            const arr = this;
+            const length = arr.length;
+            let result;
+            let startIndex;
+            if(initValue) {
+                result = initValue
+            } else {
+                for(let i = 0; i < length; i ++) {
+                    if(!arr.hasOwnProperty(i)) continue;
+                    startIndex = i;
+                    result = arr[i];
+                    break;
+                }
+            }
+
+            for(let i = ++ startIndex || 0; i < length; i ++) {
+                if(!arr.hasOwnProperty(i)) continue;
+                result = fn.call(null, result, arr[i], i, this);
+            }
+            return result;
+        }
+
+        Array.prototype.selfReduce = newReduce;
+
+
+        const resultReduce = [1,2,,,3].selfReduce((pre, cur) => pre + cur, 1);
+        console.log('reduce result', resultReduce);
+     </script>
+</body>
+
+</html>

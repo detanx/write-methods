@@ -32,7 +32,7 @@
              */
             once(eventName, callback) {
                 const one = (...args) => {
-                    callback(...args); //在one函数运行原来的函数，只有将one清空
+                    callback(...args); // 在one函数运行原来的函数，只有将one清空
                     this.removeByCallback(eventName, one);  // 执行后删除
                 }
                 this.add(eventName, one); // emit触发会执行此函数，会给这个函数传递rest参数
@@ -40,7 +40,7 @@
             /**
              * @Description: 移除事件，默认回调函数；也可以选择下标
              * @param { Any } eventName
-             * @param { Function / Number } filterValue
+             * @param { Function | Number } filterValue
              * @param { String } type // 'callback'/ 'index'
              */
             remove(eventName, filterValue, type) {

@@ -15,8 +15,10 @@
                     for (let i in target) {
                         result.push(deepClone(target[i])); // 递归克隆数组中的每一项
                     }
-                } else if( [RegExp, Date].includes(target.constructor) ){ // Date、RegExp，直接赋值 
-                    result = target;
+                } else if( target.constructor === RegExp ){ // RegExp 
+                    result = new RegExp(target.source, target.flags);
+                } else if( target.constructor === Date ){ // Date
+                    result = new Date(target);
                 } else { // 普通对象
                     result = {};
                     for (let i in target) { 

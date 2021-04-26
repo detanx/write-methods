@@ -22,7 +22,7 @@
             if (promise === x) { // 如果相等了，说明return的是自己，抛出类型错误并返回
                 return reject(new TypeError('Chaining cycle detected for promise #<Promise>'))
             }
-            if (typeof x === 'object' || typeof x === 'function') {
+            if ( ['object', 'function'].includes(typeof x) ) {
                 if (x === null) { // x 为 null 直接返回，走后面的逻辑会报错
                     return resolve(x);
                 }
