@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>formatTime</title>
+</head>
+
+<body>
+    <script>
+        /**
+         * @Description: 格式化时间戳为时分秒（24小时内）
+         * @param { Number } mistiming 时间戳
+         * @param { String } overText 截至文字
+         * @return { String }
+         */        
+        const formatTime = (mistiming, overText='已超时') => {
+            let rels;
+            if(mistiming > 0) { 
+                let hours = Math.floor(mistiming / 1000 / 60 / 60 % 24); // 获取小时
+                let minutes = Math.floor(mistiming / 1000 / 60 % 60); // 获取分钟数
+                let seconds = Math.floor(mistiming / 1000 % 60); // 获取秒数
+
+                hours < 10 ? hours = "0" + hours : hours;
+                minutes < 10 ? minutes = "0" + minutes : minutes;
+                seconds < 10 ? seconds = "0" + seconds : seconds;
+
+                rels = `${hours}:${minutes}:${seconds}`
+            };
+
+            return mistiming > 0 ? rels : overText;
+        }
+        console.log('formatTime', formatTime(85349337));
+    </script>
+</body>
+
+</html>
