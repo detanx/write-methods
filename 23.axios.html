@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>axios</title>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+    <script>
+        let baseURL = '';
+
+        if(process.env.NODE_ENV === 'development') {
+            baseURL = 'http://development.com';
+        } else {
+            baseURL = 'http://production.com';
+        }
+        const httpService = axios.create({
+            baseURL,
+            timeout: 30000
+        });
+
+        const pendingRequestList = []; // 声明一个数组用于存储每个请求的取消函数和标识
+        const cancelToken = axios.CancelToken;
+
+        const removePending = (request) => {
+            for(let req in pendingRequestList){
+                if(pendingRequestList[req].mark === request.url + '&' + request.method) { // 当前请求在数组中存在时执行函数体
+                    pendingRequestList[req].cancelFunc(); // 执行取消操作
+                    pendingRequestList.splice(req, 1); // 把这条记录从数组中移除
+                }
+            }
+        }
+        /**
+        * 添加ajax request interceptor
+        */
+        httpService.interceptors.request.use(config => {
+            config.data = JSON.stringify(config.data);
+            config.headers = {
+                'Content-Type':'application/x-www-form-urlencoded'
+            }
+            removePending(config); //在一个请求发送前执行一下取消操作
+            config.cancelToken = new cancelToken((cancel)=>{
+                // 这里的标识我是用请求地址&请求方式拼接的字符串，也可以选择其他的方式
+                pendingRequestList.push({ mark: config.url + '&' + config.method, cancelFunc: cancel });  
+            });
+            return config;
+        }, error => {
+            return Promise.reject(err);
+        });
+
+        /**
+        * 添加ajax response interceptor
+        */
+        httpService.interceptors.response.use(response => {
+            let data = response.data;
+            const code = data.code;
+
+            removePending(res.config);  //在一个请求响应后再执行一下取消操作，把已经完成的请求从pending中移除
+            if (typeof data === 'string') {
+                if (response.headers && response.headers['content-type'] == 'image/jpeg') {
+                    return data;
+                } else if (response.config.responseType === 'blob') { // 流文件
+                    return response;
+                } else {
+                    data = JSON.parse(response);
+                }
+            }
+            if (code === 200 || isNaN(code)) {
+                if(response.config.responseType === 'blob') {
+                    return response;
+                } else {
+                    return data;
+                }
+            } else {
+                return Promise.reject(data);
+            }
+        }, error => {
+            let response = error.response;
+            let data = response.data;
+            // 后台判断登录状态失效，前端跳转到登陆页
+            if (data.code === -101) {
+                // Tokens.rm();
+                window.location.href = data.data.redirectUrl;
+            }
+            if (response.status === 404){
+                console.error('接口错误');
+                return error;
+            }
+            if (!response) {
+                console.error('无网络链接，请检查后重试');
+            } else {
+                console.error(data && data.msg ? data.msg : '系统异常', 'error');
+            }
+            return Promise.reject(error);
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>drag div</title>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+        }
+        #d_wrapper {
+            display: flex;
+            width: 100vw;
+            height: 300px;
+        }
+        .common {
+            min-width: 200px;
+            height: 100%;
+        }
+        .left {
+            flex: 0.7;
+            background-color: aqua;
+            /* transition: 0.3s; */
+        }
+        .right {
+            flex: 0.3;
+            background-color: aquamarine;
+            /* transition: 0.3s; */
+        }
+        .drag {
+            width: 20px;
+            height: 100%;
+            background-color: black;
+            cursor: col-resize;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div id="d_wrapper">
+        <div id="left" class="left common"></div>
+        <div class="drag" onmousedown="dragDown()">按下左右拖动</div>
+        <div id='right' class="right common"></div>
+    </div>
+    <script>
+        let dragFlag = true, dragTime = null;
+        function dragDown() {
+            const wrapper = document.getElementById('d_wrapper');
+            const leftDom = document.getElementById('left');
+            const rightDom = document.getElementById('right');
+
+            document.onmousemove = function (event) {
+                if (dragFlag) {
+                    wrapper.style.cursor = 'col-resize';
+                    dragFlag = false;
+                    const clientWidth = document.body.clientWidth;
+                    let left = event.clientX;;
+                    let right = clientWidth - left; // 计算右边 px 宽度
+                    let leftDivFlex = left / clientWidth;
+                    let rightDivFlex = right / clientWidth;
+                    if (leftDivFlex > 0.55) {
+                        leftDom.style.flex = leftDivFlex;
+                        rightDom.style.flex = rightDivFlex;
+                    }
+                    dragTime = setTimeout(_ => {
+                        dragFlag = true;
+                        dragTime = null;
+                    }, 20)
+                }
+            }
+            document.onmouseup = function (event) {
+                wrapper.style.cursor = 'auto';
+                event.stopPropagation();
+                event.preventDefault();
+                document.onmousemove = null;
+                document.onmouseup = null;
+            }
+        }
+    </script>
+</body>
+</html>

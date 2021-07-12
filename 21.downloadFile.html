@@ -10,7 +10,7 @@
 <body>
     <script>
         /**
-         * @Description: 下载流文件
+         * @Description: 下载流文件（接口返回类型需要设置 { responseType: 'blob' }）
          * @param { Blod } blobData 文件流数据
          * @param { String } fileName 文件名及类型 - 文档.xlsx
          * @param { Object } blobOptions Blob对象参数
@@ -20,17 +20,16 @@
             if ('download' in document.createElement('a')) { // 非IE下载
                 const elink = document.createElement('a')
                 elink.download = fileName;
-                elink.style.display = 'none'
-                elink.href = URL.createObjectURL(blob)
-                document.body.appendChild(elink)
-                elink.click()
-                URL.revokeObjectURL(elink.href) // 释放URL 对象
-                document.body.removeChild(elink)
+                elink.style.display = 'none';
+                elink.href = URL.createObjectURL(blob);
+                document.body.appendChild(elink);
+                elink.click();
+                URL.revokeObjectURL(elink.href); // 释放URL 对象
+                document.body.removeChild(elink);
             }  else { // IE10+下载
-                navigator.msSaveBlob(blob, fileName)
+                navigator.msSaveBlob(blob, fileName);
             }
         }
     </script>
 </body>
-
 </html>

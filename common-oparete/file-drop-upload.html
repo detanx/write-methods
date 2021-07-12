@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>文件拖拽上传</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            #process {
+                width: 300px;
+                margin: 100px calc(50% - 150px);
+            }
+            meter {
+                width: 100%;
+            }
+            #upload {
+                /* display: none; */
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin: -150px 0 0 -150px;
+                width: 300px;
+                height: 300px;
+                border: 1px dashed cadetblue;
+                color: cornflowerblue;
+                text-align: center;
+                font: 20px/300px '微软雅黑';
+            }
+        </style>
+    </head>
+<body>
+    <div id="process">
+        <p>上传进度</p>
+        <meter value="0" min="0" max="100"></meter>
+    </div>
+    <div id="upload">请将文件拖拽到此区域</div>
+</body>
+<script>
+    window.onload = function () {
+        const uploadDom = document.getElementById('upload');
+        const processDom = document.getElementById('process');
+        let timer = null;
+        document.ondragover = function() {
+            clearTimeout(timer);
+            timer = setTimeout(function() {
+                uploadDom.style.display = 'none';
+            }, 500);
+            uploadDom.style.display = 'block';
+        };
+        uploadDom.ondragenter = function(){
+            uploadDom.innerHTML = '请释放鼠标';
+        };
+        // 进入子元素时会频繁触发ondragover，不回触发ondrop
+        uploadDom.ondragover = function(){
+            return false;
+        };
+        uploadDom.ondragleave = function(){
+            uploadDom.innerHTML = '请将文件拖拽到此区域';
+        };
+        uploadDom.ondrop = function(event){
+            const oFile = event.dataTransfer.files[0];
+            const reader = new FileReader();  
+            reader.onload = function(){ // 读取成功
+                console.log(reader);
+            };
+            reader.onloadstart = function(){
+                console.log('开始读取');
+            };
+            reader.onloadend = function(){
+                console.log('读取结束');
+            };
+            reader.onabort = function(){
+                console.log('中断');
+            };
+            reader.onerror = function(){
+                console.log('读取失败');
+            };
+            reader.onprogress = function(event){
+                const scale = event.loaded / event.total;
+                if(scale >= 0.5){
+                    reader.abort();
+                }
+                processDom.value = scale * 100;
+            };
+            reader.readAsDataURL(oFile,'base64');
+            return false;
+        };
+    };
+</script>
+</html>
+
