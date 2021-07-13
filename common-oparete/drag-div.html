@@ -54,7 +54,9 @@
                 if (dragFlag) {
                     wrapper.style.cursor = 'col-resize';
                     dragFlag = false;
+                    // clientWidth 应为容器的宽度，在示例中容器宽度与 body 宽度相同
                     const clientWidth = document.body.clientWidth;
+                    // const clientWidth = wrapper.clientWidth;
                     let left = event.clientX;;
                     let right = clientWidth - left; // 计算右边 px 宽度
                     let leftDivFlex = left / clientWidth;
