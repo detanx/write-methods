@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>compose</title>
+</head>
+
+<body>
+    <script>
+        function compose(...fns) {
+            let len = fns.length - 1;
+            let index = 0;
+            let res = null;
+            return function fn(...arg) {
+                res = fns[index].apply(null, arg) // 每次函数运行的结果
+                if(index < len) {
+                    index ++;
+                    return fn.call(null, res) // 将结果递归传给下一个函数
+                }
+                return res //返回结果
+            }
+        }
+
+        function composeReduce(...fns) {
+            return function(...arg){
+                return fns.reduce((acc, cur) => {
+                    // 第一次acc是函数，之后是结果，所以要加个判断
+                    return typeof acc === 'function' ? cur(acc(...arg)) : cur(acc)
+                })
+            }
+        }
+        function add (x) {
+            return x + 10;
+        }
+        function subtract(x) {
+            return x - 5
+        }
+        function multiply(x) {
+            return x * 4;
+        }
+        function divide(x) {
+            return x / 2;
+        }
+        const com = compose(add, subtract, multiply, divide);
+        const comR = composeReduce(add, subtract, multiply, divide);
+        console.log(com(10));
+        console.log(comR(10));
+    </script>
+</body>
+
+</html>

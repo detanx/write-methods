@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LRU</title>
+</head>
+
+<body>
+    <script>
+        class LRU {
+            constructor(max) {
+                this.lists = [];
+                this.max = max;
+                this.length = 0;
+            }
+            add(item) {
+                if(this.lists.includes(item)) {
+                    const index = this.lists.indexOf(item);
+                    this.lists.splice(index, 1);
+                    this.lists.push(item);
+                } else {
+                    if(this.length < this.max) {
+                        this.lists.push(item);
+                        this.length ++;
+                    } else {
+                        this.lists.shift();
+                        this.lists.push(item);
+                    }
+                }
+            }
+            get(item) {
+                if(this.lists.includes(item)) {
+                    return true
+                }
+                return false;
+            }
+            getLists () {
+                return this.lists;
+            }
+            
+            
+        }
+        const events = new LRU(2);
+        events.add(1);
+        events.add(2);
+        console.log(events.getLists());
+        events.add(1);
+        
+        console.log(events.getLists());
+    </script>
+</body>
+
+</html>
