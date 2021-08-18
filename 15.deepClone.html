@@ -25,10 +25,8 @@
                         result[i] = deepClone(target[i]);
                     }
                 }
-            } else { // 基本数据类型
-                result = target;
             }
-            return result;
+            return target; // 基本数据类型，function
         }
 
         // test
