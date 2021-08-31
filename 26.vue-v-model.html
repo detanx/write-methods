@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>vue-v-model</title>
+</head>
+
+<body>
+    <div id="app"> 
+        <input type="text" l-model="msg"> 
+        <p l-html="msg"></p>
+        <input type="text" l-model="info">
+        <p l-html="info"></p>
+        <button l-on:click="clickMe">增加</button>    
+        <p>{{msg}}</p>
+    </div>
+    <script>
+        function Vue (options) {
+            this.$el = document.querySelector(options.el);
+            this.$data = options.data;
+            this.$methods = options.methods;
+            this.deps = {};
+            this.observer(this.$data);
+            this.complie(this.$el);
+        }
+
+        Vue.prototype.complie = function(el) {
+            let nodes = el.children;
+            for(let i= 0;i < nodes.length; i ++) {
+                let node = nodes[i];
+                if(node.children.length) {
+                    this.complie(node)
+                }
+                if(node.hasAttribute('l-model')) {
+                    let attrVal = node.getAttribute('l-model');
+                    node.addEventListener('input', (() => {
+                        this.deps[attrVal].push(new Watcher(node, 'value', this, attrVal))
+                        let thisNode = node;
+                        return () => {
+                            this.$data[attrVal] = thisNode.value
+                        }
+                    })())
+                }
+                if(node.hasAttribute('l-html')) {
+                    let attrVal = node.getAttribute('l-html');
+                    this.deps[attrVal].push(new Watcher(node, 'innerHTML', this, attrVal))
+                }
+                if(node.innerHTML.match(/{{([^\{|\}]+)}}/)) {
+                    let attrVal = node.innerHTML.replace(/[{{|}}]/g, '')
+                    this.deps[attrVal].push(new Watcher(node, 'innerHTML', this, attrVal))
+                }
+                if(node.hasAttribute('l-on:click')) {
+                    let attrVal = node.getAttribute('l-on:click');
+                    node.addEventListener('click',  this.$methods[attrVal].bind(this.$data))
+                }
+            }
+        }
+
+        Vue.prototype.observer = function(data) {
+            const that = this;
+            for(let key in data) {
+                that.deps[key] = [];
+            }
+            let handler = {
+                get(target, property) {
+                    return target[property]
+                },
+                set(target, key, value) {
+                    let res = Reflect.set(target, key, value);
+                    let watchers = that.deps[key];
+                    watchers.map(item => {
+                        item.update();
+                    })
+                    return res
+                }
+            }
+            this.$data = new Proxy(data, handler)
+        }
+        function Watcher(el, attr, vm, attrVal) {
+            this.el = el;
+            this.attr = attr;
+            this.vm = vm;
+            this.val = attrVal;
+            this.update();
+        }
+        Watcher.prototype.update = function() {
+            this.el[this.attr] = this.vm.$data[this.val]
+        }
+        window.onload = function () {
+
+            const vm = new Vue({
+            el: '#app',
+            data: {
+                msg: 'gggg',
+                info: 0
+            },
+            methods: {
+                clickMe() {
+                    this.info ++
+                }
+            }
+        })
+        }
+    </script>
+</div>
+</body>
+</html>
